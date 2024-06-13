@@ -8,5 +8,6 @@ body {
   height: 100%;
   background-color: #fff;
   position: relative;
-  font-family: 'Roboto', sans-serif
+  font-family: 'Roboto', sans-serif;
+  color: #0F0F0F
 }
