@@ -256,16 +256,18 @@ export const App = () => {
           Выберите предложение
         </Typography.TitleResponsive>
 
-        {dataset.reverse().map(v => (
-          <BoxItem
-            key={v.period}
-            payment={Number(v.value.toFixed(0)).toLocaleString('ru')}
-            period={v.period}
-            rate={v.rate === 0.36 ? 0.2 : 0.17}
-            checked={checkedBox === v.period}
-            setChecked={onSelectOption}
-          />
-        ))}
+        {dataset
+          .sort((a, b) => a.value - b.value)
+          .map(v => (
+            <BoxItem
+              key={v.period}
+              payment={Number(v.value.toFixed(0)).toLocaleString('ru')}
+              period={v.period}
+              rate={v.rate === 0.36 ? 0.2 : 0.17}
+              checked={checkedBox === v.period}
+              setChecked={onSelectOption}
+            />
+          ))}
       </div>
       <Gap size={96} />
       <div className={appSt.bottomBtn}>
