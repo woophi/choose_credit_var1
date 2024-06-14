@@ -256,7 +256,7 @@ export const App = () => {
           Выберите предложение
         </Typography.TitleResponsive>
 
-        {dataset.map(v => (
+        {dataset.reverse().map(v => (
           <BoxItem
             key={v.period}
             payment={Number(v.value.toFixed(0)).toLocaleString('ru')}
