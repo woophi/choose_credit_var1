@@ -139,6 +139,8 @@ export const App = () => {
       setError('Выберите предложение');
       return;
     }
+    (window.location as unknown as string) =
+      'alfabank://webFeature?type=recommendation&url=https%3A%2F%2Fclick.alfabank.ru%2Fmobile-offers%2Fweb%2FPIL%2Fcredits%2FCH?isWebView=true';
   }, [checkedBox]);
 
   const onSelectOption = useCallback((v: `${number}-${number}`) => {
