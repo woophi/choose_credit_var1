@@ -6,12 +6,10 @@ import { SliderInput, SliderInputProps } from '@alfalab/core-components/slider-i
 import { Typography } from '@alfalab/core-components/typography';
 import { useCallback, useEffect, useState } from 'react';
 import { BoxItem } from './BoxItem';
-import { default as fisrtData } from './data/kn_group1_result.json';
-import { default as secondData } from './data/kpzn_group1_result.json';
 import { appSt } from './style.css';
 
 const min = 30_000;
-const max = 1_600_000;
+const max = 1_300_000;
 const step = 10_000;
 const range: SliderInputProps['range'] = {
   min: [min],
@@ -27,45 +25,50 @@ const pips: SliderInputProps['pips'] = {
   },
 };
 
-// function calculatePayment(
-//   principal: number,
-//   interestRate: number,
-//   term: number
-// ) {
-//   const monthlyInterestRate = interestRate / 12;
-//   const exponent = Math.pow(1 + monthlyInterestRate, term);
+const KN_PERIODS = [13, 18, 24, 36, 48, 60];
+const KPZN_PERIODS = [12, 24, 36, 48, 60, 72, 84, 96, 108, 120];
+const KCAR_PERIODS = [36, 48, 60, 72, 84, 96];
 
-//   return (principal * monthlyInterestRate * exponent) / (exponent - 1);
-// }
+const KPZN_START_LIMIT = 500_000;
+const KCAR_START_LIMIT = 300_000;
+const KCAR_END_LIMIT = 600_000;
+
+function calculatePayment(principal: number, interestRate: number, term: number) {
+  const monthlyInterestRate = interestRate / 12;
+  const exponent = Math.pow(1 + monthlyInterestRate, term);
+
+  return (principal * monthlyInterestRate * exponent) / (exponent - 1);
+}
 
 function findNearestValue(arr: number[], target: number) {
   return arr.reduce((prev, curr) => (Math.abs(curr - target) < Math.abs(prev - target) ? curr : prev));
 }
 
 export const App = () => {
-  const [value, setValue] = useState<number | string>(min);
+  const [value, setValue] = useState<number | string>(KPZN_START_LIMIT);
   const [expanded, setExpanded] = useState(false);
-  const [checkedBox, setChecked] = useState(0);
+  const [checkedBox, setChecked] = useState<`${number}-${number}` | ''>('');
   const [err, setError] = useState('');
 
-  const numberValue = typeof value === 'string' ? Number(value.replace(/ /g, '')) : value;
-  const dataset =
-    numberValue <= 700_000
-      ? fisrtData[`${numberValue as unknown as keyof typeof fisrtData}`] ?? fisrtData[30000]
-      : secondData[`${numberValue as unknown as keyof typeof secondData}`] ?? secondData[700000];
+  const numberValue = typeof value === 'string' ? Number(value.replace(/\s+/g, '')) : value;
+  const isDataForKpzn = numberValue > KPZN_START_LIMIT;
 
-  const pipsValuesMonthlyPayment = dataset.map(v => Number(v.value.toFixed(0))).sort((a, b) => a - b);
+  const pipsValuesMonthlyPayment = (isDataForKpzn ? KPZN_PERIODS : KN_PERIODS)
+    .map(period => Number(calculatePayment(numberValue, isDataForKpzn ? 0.24 : 0.4, period).toFixed(0)))
+    .sort((a, b) => a - b);
 
-  const [monthlyValue, setMonthlyValue] = useState<number | string>(pipsValuesMonthlyPayment[0]);
+  const [monthlyValue, setMonthlyValue] = useState<number | string>(
+    Number(calculatePayment(numberValue, 0.4, 36).toFixed(0)),
+  );
 
-  const monthlyNumberValue = typeof monthlyValue === 'string' ? Number(monthlyValue.replace(/ /g, '')) : monthlyValue;
+  const monthlyNumberValue = typeof monthlyValue === 'string' ? Number(monthlyValue.replace(/\s+/g, '')) : monthlyValue;
 
-  const pipsValuesPeriod = dataset.map(v => v.period).sort((a, b) => b - a);
-  const [periodValue, setPeriodValue] = useState<number>(pipsValuesPeriod[0]);
+  const pipsValuesPeriod = (isDataForKpzn ? KPZN_PERIODS : KN_PERIODS).sort((a, b) => b - a);
+  const [periodValue, setPeriodValue] = useState<number>(36);
 
   useEffect(() => {
     setMonthlyValue(pipsValuesMonthlyPayment[0]);
-    setChecked(0);
+    setChecked('');
   }, [numberValue]);
 
   useEffect(() => {
@@ -80,7 +83,7 @@ export const App = () => {
   }, [periodValue]);
 
   const handleInputChange: SliderInputProps['onInputChange'] = (_, { value }) => {
-    setValue(typeof value === 'string' ? Number(value.replace(/ /g, '')) : value);
+    setValue(typeof value === 'string' ? Number(value.replace(/\s+/g, '')) : value);
   };
 
   const handleSliderChange: SliderInputProps['onSliderChange'] = ({ value }) => {
@@ -92,7 +95,7 @@ export const App = () => {
   };
 
   const handleMInputChange: SliderInputProps['onInputChange'] = (_, { value }) => {
-    setMonthlyValue(typeof value === 'string' ? Number(value.replace(/ /g, '')) : value);
+    setMonthlyValue(typeof value === 'string' ? Number(value.replace(/\s+/g, '')) : value);
   };
 
   const handleMSliderChange: SliderInputProps['onSliderChange'] = ({ value }) => {
@@ -138,7 +141,7 @@ export const App = () => {
     }
   }, [checkedBox]);
 
-  const onSelectOption = useCallback((v: number) => {
+  const onSelectOption = useCallback((v: `${number}-${number}`) => {
     setError('');
     setChecked(v);
   }, []);
@@ -256,18 +259,70 @@ export const App = () => {
           Выберите предложение
         </Typography.TitleResponsive>
 
-        {dataset
-          .sort((a, b) => a.value - b.value)
-          .map(v => (
+        <BoxItem
+          payment={monthlyNumberValue.toLocaleString('ru')}
+          period={periodValue}
+          rate={isDataForKpzn ? 0.19 : 0.21}
+          checked={checkedBox === `${periodValue}-${monthlyNumberValue}`}
+          setChecked={onSelectOption}
+          text={isDataForKpzn ? 'Самые выгодные условия, понадобится недвижимость в залог' : 'Онлайн одобрение за 2 минуты'}
+        />
+        {numberValue === 500_000 && (
+          <BoxItem
+            payment={Number(calculatePayment(numberValue, 0.19, periodValue).toFixed(0)).toLocaleString('ru')}
+            period={periodValue}
+            rate={0.19}
+            checked={checkedBox === `${periodValue}-${Number(calculatePayment(numberValue, 0.19, periodValue).toFixed(0))}`}
+            setChecked={onSelectOption}
+            text={'Самые выгодные условия, понадобится недвижимость в залог'}
+          />
+        )}
+
+        {KCAR_START_LIMIT <= numberValue && numberValue <= KCAR_END_LIMIT && KCAR_PERIODS.includes(periodValue) ? (
+          <BoxItem
+            payment={Number(calculatePayment(numberValue, 0.3, periodValue).toFixed(0)).toLocaleString('ru')}
+            period={periodValue}
+            rate={0.18}
+            checked={checkedBox === `${periodValue}-${Number(calculatePayment(numberValue, 0.3, periodValue).toFixed(0))}`}
+            setChecked={onSelectOption}
+            text="Кредит на автомобиль"
+          />
+        ) : null}
+
+        {pipsValuesPeriod[0] !== periodValue ? (
+          <>
             <BoxItem
-              key={v.period}
-              payment={Number(v.value.toFixed(0)).toLocaleString('ru')}
-              period={v.period}
-              rate={v.rate === 0.36 ? 0.2 : 0.17}
-              checked={checkedBox === v.period}
+              payment={Number(
+                calculatePayment(numberValue, isDataForKpzn ? 0.24 : 0.4, pipsValuesPeriod[0]).toFixed(0),
+              ).toLocaleString('ru')}
+              period={pipsValuesPeriod[0]}
+              rate={isDataForKpzn ? 0.19 : 0.21}
+              checked={
+                checkedBox ===
+                `${pipsValuesPeriod[0]}-${Number(
+                  calculatePayment(numberValue, isDataForKpzn ? 0.24 : 0.4, pipsValuesPeriod[0]).toFixed(0),
+                )}`
+              }
               setChecked={onSelectOption}
+              text={
+                isDataForKpzn
+                  ? 'Кредит под залог недвижимости на максимальный срок'
+                  : 'Кредит наличными на максимальный срок'
+              }
             />
-          ))}
+          </>
+        ) : null}
+
+        {numberValue === 500_000 && (
+          <BoxItem
+            payment={Number(calculatePayment(numberValue, 0.19, 120).toFixed(0)).toLocaleString('ru')}
+            period={120}
+            rate={0.19}
+            checked={checkedBox === `${120}-${Number(calculatePayment(numberValue, 0.19, 120).toFixed(0))}`}
+            setChecked={onSelectOption}
+            text={'Самые выгодные условия, понадобится недвижимость в залог'}
+          />
+        )}
       </div>
       <Gap size={96} />
       <div className={appSt.bottomBtn}>

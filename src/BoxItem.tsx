@@ -5,13 +5,14 @@ import { appSt } from './style.css';
 
 type Props = {
   checked: boolean;
-  setChecked: (v: number) => void;
+  setChecked: (v: `${number}-${number}`) => void;
   rate: number;
   period: number;
   payment: string;
+  text: string;
 };
 
-export const BoxItem = ({ checked, setChecked, payment, period, rate }: Props) => {
+export const BoxItem = ({ checked, setChecked, payment, period, rate, text }: Props) => {
   const id = useId();
 
   return (
@@ -22,10 +23,15 @@ export const BoxItem = ({ checked, setChecked, payment, period, rate }: Props) =
             {payment} ₽ / мес
           </Typography.Text>
           <Typography.Text tag="p" view="component-secondary" defaultMargins={false} color="secondary">
-            Онлайн одобрение за 2 минуты
+            {text}
           </Typography.Text>
         </div>
-        <Radio id={id} checked={checked} name="boxes" onChange={() => setChecked(period)} />
+        <Radio
+          id={id}
+          checked={checked}
+          name="boxes"
+          onChange={() => setChecked(`${period}-${Number(payment.replace(/\s+/g, ''))}`)}
+        />
       </div>
 
       <div className={appSt.tag}>
