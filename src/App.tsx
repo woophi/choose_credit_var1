@@ -328,7 +328,7 @@ export const App = () => {
       </div>
       <Gap size={96} />
       <div className={appSt.bottomBtn}>
-        <ButtonMobile block view="primary" onClick={submit} hint={err}>
+        <ButtonMobile block view="primary" onClick={submit} hint={err} className={appSt.hint}>
           Продолжить
         </ButtonMobile>
       </div>

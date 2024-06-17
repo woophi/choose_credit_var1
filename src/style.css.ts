@@ -1,4 +1,4 @@
-import { style } from '@vanilla-extract/css';
+import { globalStyle, style } from '@vanilla-extract/css';
 import { recipe } from '@vanilla-extract/recipes';
 
 const bottomBtn = style({
@@ -69,6 +69,12 @@ const check = style({
   justifyContent: 'space-between',
 });
 
+const hint = style({});
+
+globalStyle(`${hint} > span > span`, {
+  color: 'var(--color-light-text-negative)',
+});
+
 export const appSt = {
   bottomBtn,
   container,
@@ -80,4 +86,5 @@ export const appSt = {
   collapseArrow,
   tag,
   check,
+  hint,
 };
