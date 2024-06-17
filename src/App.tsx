@@ -267,7 +267,7 @@ export const App = () => {
           rate={isDataForKpzn ? 0.19 : 0.21}
           checked={checkedBox === `${periodValue}-${monthlyNumberValue}`}
           setChecked={onSelectOption}
-          text={isDataForKpzn ? 'Самые выгодные условия, понадобится недвижимость в залог' : 'Онлайн одобрение за 2 минуты'}
+          text={isDataForKpzn ? 'Понадобится недвижимость в залог' : 'Онлайн одобрение за 2 минуты'}
         />
         {numberValue === 500_000 && (
           <BoxItem
@@ -276,7 +276,7 @@ export const App = () => {
             rate={0.19}
             checked={checkedBox === `${periodValue}-${Number(calculatePayment(numberValue, 0.19, periodValue).toFixed(0))}`}
             setChecked={onSelectOption}
-            text={'Самые выгодные условия, понадобится недвижимость в залог'}
+            text={'Понадобится недвижимость в залог'}
           />
         )}
 
@@ -322,7 +322,7 @@ export const App = () => {
             rate={0.19}
             checked={checkedBox === `${120}-${Number(calculatePayment(numberValue, 0.19, 120).toFixed(0))}`}
             setChecked={onSelectOption}
-            text={'Самые выгодные условия, понадобится недвижимость в залог'}
+            text={'Понадобится недвижимость в залог'}
           />
         )}
       </div>
