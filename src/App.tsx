@@ -7,6 +7,7 @@ import { Typography } from '@alfalab/core-components/typography';
 import { useCallback, useEffect, useState } from 'react';
 import { BoxItem } from './BoxItem';
 import { appSt } from './style.css';
+import { sendDataToGA } from './utils/events';
 
 const min = 30_000;
 const max = 1_300_000;
@@ -45,9 +46,10 @@ function findNearestValue(arr: number[], target: number) {
 }
 
 export const App = () => {
+  const [loading, setLoading] = useState(false);
   const [value, setValue] = useState<number | string>(KPZN_START_LIMIT);
   const [expanded, setExpanded] = useState(false);
-  const [checkedBox, setChecked] = useState<`${number}-${number}` | ''>('');
+  const [checkedBox, setChecked] = useState<string>('');
   const [err, setError] = useState('');
 
   const numberValue = typeof value === 'string' ? Number(value.replace(/\s+/g, '')) : value;
@@ -134,16 +136,27 @@ export const App = () => {
     setExpanded(!expanded);
   };
 
-  const submit = useCallback(() => {
+  const submit = () => {
     if (!checkedBox) {
       setError('Выберите предложение');
       return;
     }
-    (window.location as unknown as string) =
-      'alfabank://webFeature?type=recommendation&url=https%3A%2F%2Fclick.alfabank.ru%2Fmobile-offers%2Fweb%2FPIL%2Fcredits%2FCH?isWebView=true';
-  }, [checkedBox]);
+    setLoading(true);
+    sendDataToGA({
+      creditPeriod: periodValue,
+      creditSum: numberValue,
+      overpaymentSum: monthlyNumberValue * periodValue - numberValue,
+      paymentSum: monthlyNumberValue,
+      offer: checkedBox,
+    }).then(() => {
+      setLoading(false);
 
-  const onSelectOption = useCallback((v: `${number}-${number}`) => {
+      (window.location as unknown as string) =
+        'alfabank://webFeature?type=recommendation&url=https%3A%2F%2Fclick.alfabank.ru%2Fmobile-offers%2Fweb%2FPIL%2Fcredits%2FCH?isWebView=true';
+    });
+  };
+
+  const onSelectOption = useCallback((v: string) => {
     setError('');
     setChecked(v);
   }, []);
@@ -176,7 +189,6 @@ export const App = () => {
           label="Сумма кредита"
           labelView="outer"
         />
-
         <SliderInput
           block
           value={monthlyValue.toLocaleString('ru')}
@@ -247,25 +259,21 @@ export const App = () => {
             </Typography.Text>
           </div>
         </Collapse>
-
         <div onClick={handleToggle} className={appSt.collapseAction}>
           <Typography.Text tag="p" defaultMargins={false}>
             {expanded ? 'Свернуть' : 'Все условия'}
           </Typography.Text>
           <CDNIcon color="#C1C1C3" name="glyph_chevron-down_m" className={appSt.collapseArrow({ open: expanded })} />
         </div>
-
         <Gap size={1} />
-
         <Typography.TitleResponsive font="system" tag="h2" view="xsmall" weight="medium">
           Выберите предложение
         </Typography.TitleResponsive>
-
         <BoxItem
           payment={monthlyNumberValue.toLocaleString('ru')}
           period={periodValue}
           rate={isDataForKpzn ? 0.19 : 0.21}
-          checked={checkedBox === `${periodValue}-${monthlyNumberValue}`}
+          checked={boxValue => checkedBox === boxValue}
           setChecked={onSelectOption}
           text={isDataForKpzn ? 'Понадобится недвижимость в залог' : 'Онлайн одобрение за 2 минуты'}
         />
@@ -274,23 +282,21 @@ export const App = () => {
             payment={Number(calculatePayment(numberValue, 0.19, periodValue).toFixed(0)).toLocaleString('ru')}
             period={periodValue}
             rate={0.19}
-            checked={checkedBox === `${periodValue}-${Number(calculatePayment(numberValue, 0.19, periodValue).toFixed(0))}`}
+            checked={boxValue => checkedBox === boxValue}
             setChecked={onSelectOption}
             text={'Понадобится недвижимость в залог'}
           />
         )}
-
         {KCAR_START_LIMIT <= numberValue && numberValue <= KCAR_END_LIMIT && KCAR_PERIODS.includes(periodValue) ? (
           <BoxItem
             payment={Number(calculatePayment(numberValue, 0.3, periodValue).toFixed(0)).toLocaleString('ru')}
             period={periodValue}
             rate={0.18}
-            checked={checkedBox === `${periodValue}-${Number(calculatePayment(numberValue, 0.3, periodValue).toFixed(0))}`}
+            checked={boxValue => checkedBox === boxValue}
             setChecked={onSelectOption}
             text="Кредит на автомобиль"
           />
         ) : null}
-
         {pipsValuesPeriod[0] !== periodValue ? (
           <>
             <BoxItem
@@ -299,12 +305,7 @@ export const App = () => {
               ).toLocaleString('ru')}
               period={pipsValuesPeriod[0]}
               rate={isDataForKpzn ? 0.19 : 0.21}
-              checked={
-                checkedBox ===
-                `${pipsValuesPeriod[0]}-${Number(
-                  calculatePayment(numberValue, isDataForKpzn ? 0.24 : 0.4, pipsValuesPeriod[0]).toFixed(0),
-                )}`
-              }
+              checked={boxValue => checkedBox === boxValue}
               setChecked={onSelectOption}
               text={
                 isDataForKpzn
@@ -314,13 +315,12 @@ export const App = () => {
             />
           </>
         ) : null}
-
         {numberValue === 500_000 && (
           <BoxItem
             payment={Number(calculatePayment(numberValue, 0.19, 120).toFixed(0)).toLocaleString('ru')}
             period={120}
             rate={0.19}
-            checked={checkedBox === `${120}-${Number(calculatePayment(numberValue, 0.19, 120).toFixed(0))}`}
+            checked={boxValue => checkedBox === boxValue}
             setChecked={onSelectOption}
             text={'Понадобится недвижимость в залог'}
           />
@@ -328,7 +328,7 @@ export const App = () => {
       </div>
       <Gap size={96} />
       <div className={appSt.bottomBtn}>
-        <ButtonMobile block view="primary" onClick={submit} hint={err} className={appSt.hint}>
+        <ButtonMobile loading={loading} block view="primary" onClick={submit} hint={err} className={appSt.hint}>
           Продолжить
         </ButtonMobile>
       </div>

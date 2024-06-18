@@ -4,8 +4,8 @@ import { useId } from 'react';
 import { appSt } from './style.css';
 
 type Props = {
-  checked: boolean;
-  setChecked: (v: `${number}-${number}`) => void;
+  checked: (v: string) => boolean;
+  setChecked: (v: string) => void;
   rate: number;
   period: number;
   payment: string;
@@ -15,6 +15,7 @@ type Props = {
 export const BoxItem = ({ checked, setChecked, payment, period, rate, text }: Props) => {
   const id = useId();
 
+  const boxValue = `${Number(payment.replace(/\s+/g, ''))};${text};${rate * 100}%;${period}мес`;
   return (
     <label htmlFor={id} className={appSt.card}>
       <div className={appSt.check}>
@@ -26,12 +27,7 @@ export const BoxItem = ({ checked, setChecked, payment, period, rate, text }: Pr
             {text}
           </Typography.Text>
         </div>
-        <Radio
-          id={id}
-          checked={checked}
-          name="boxes"
-          onChange={() => setChecked(`${period}-${Number(payment.replace(/\s+/g, ''))}`)}
-        />
+        <Radio id={id} checked={checked(boxValue)} name="boxes" onChange={() => setChecked(boxValue)} />
       </div>
 
       <div className={appSt.tag}>
