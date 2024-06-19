@@ -10,7 +10,7 @@ import { appSt } from './style.css';
 import { sendDataToGA } from './utils/events';
 
 const min = 30_000;
-const max = 1_300_000;
+const max = 2_100_000;
 const step = 10_000;
 const range: SliderInputProps['range'] = {
   min: [min],
@@ -30,9 +30,10 @@ const KN_PERIODS = [13, 18, 24, 36, 48, 60];
 const KPZN_PERIODS = [12, 24, 36, 48, 60, 72, 84, 96, 108, 120];
 const KCAR_PERIODS = [36, 48, 60, 72, 84, 96];
 
+const KN_END_LIMIT = 1_300_000;
 const KPZN_START_LIMIT = 500_000;
 const KCAR_START_LIMIT = 300_000;
-const KCAR_END_LIMIT = 600_000;
+const KCAR_END_LIMIT = 1_500_000;
 
 function calculatePayment(principal: number, interestRate: number, term: number) {
   const monthlyInterestRate = interestRate / 12;
@@ -53,14 +54,14 @@ export const App = () => {
   const [err, setError] = useState('');
 
   const numberValue = typeof value === 'string' ? Number(value.replace(/\s+/g, '')) : value;
-  const isDataForKpzn = numberValue > KPZN_START_LIMIT;
+  const isDataForKpzn = numberValue > KN_END_LIMIT;
 
   const pipsValuesMonthlyPayment = (isDataForKpzn ? KPZN_PERIODS : KN_PERIODS)
-    .map(period => Number(calculatePayment(numberValue, isDataForKpzn ? 0.24 : 0.4, period).toFixed(0)))
+    .map(period => Number(calculatePayment(numberValue, isDataForKpzn ? 0.22 : 0.29, period).toFixed(0)))
     .sort((a, b) => a - b);
 
   const [monthlyValue, setMonthlyValue] = useState<number | string>(
-    Number(calculatePayment(numberValue, 0.4, 36).toFixed(0)),
+    Number(calculatePayment(numberValue, 0.29, 36).toFixed(0)),
   );
 
   const monthlyNumberValue = typeof monthlyValue === 'string' ? Number(monthlyValue.replace(/\s+/g, '')) : monthlyValue;
@@ -272,16 +273,16 @@ export const App = () => {
         <BoxItem
           payment={monthlyNumberValue.toLocaleString('ru')}
           period={periodValue}
-          rate={isDataForKpzn ? 0.19 : 0.21}
+          rate={isDataForKpzn ? 0.18 : 0.23}
           checked={boxValue => checkedBox === boxValue}
           setChecked={onSelectOption}
           text={isDataForKpzn ? 'Понадобится недвижимость в залог' : 'Онлайн одобрение за 2 минуты'}
         />
-        {numberValue === 500_000 && (
+        {numberValue >= KPZN_START_LIMIT && KPZN_PERIODS.includes(periodValue) && !isDataForKpzn && (
           <BoxItem
-            payment={Number(calculatePayment(numberValue, 0.19, periodValue).toFixed(0)).toLocaleString('ru')}
+            payment={Number(calculatePayment(numberValue, 0.22, periodValue).toFixed(0)).toLocaleString('ru')}
             period={periodValue}
-            rate={0.19}
+            rate={0.18}
             checked={boxValue => checkedBox === boxValue}
             setChecked={onSelectOption}
             text={'Понадобится недвижимость в залог'}
@@ -289,9 +290,9 @@ export const App = () => {
         )}
         {KCAR_START_LIMIT <= numberValue && numberValue <= KCAR_END_LIMIT && KCAR_PERIODS.includes(periodValue) ? (
           <BoxItem
-            payment={Number(calculatePayment(numberValue, 0.3, periodValue).toFixed(0)).toLocaleString('ru')}
+            payment={Number(calculatePayment(numberValue, 0.28, periodValue).toFixed(0)).toLocaleString('ru')}
             period={periodValue}
-            rate={0.18}
+            rate={0.16}
             checked={boxValue => checkedBox === boxValue}
             setChecked={onSelectOption}
             text="Кредит на автомобиль"
@@ -301,10 +302,10 @@ export const App = () => {
           <>
             <BoxItem
               payment={Number(
-                calculatePayment(numberValue, isDataForKpzn ? 0.24 : 0.4, pipsValuesPeriod[0]).toFixed(0),
+                calculatePayment(numberValue, isDataForKpzn ? 0.22 : 0.29, pipsValuesPeriod[0]).toFixed(0),
               ).toLocaleString('ru')}
               period={pipsValuesPeriod[0]}
-              rate={isDataForKpzn ? 0.19 : 0.21}
+              rate={isDataForKpzn ? 0.18 : 0.23}
               checked={boxValue => checkedBox === boxValue}
               setChecked={onSelectOption}
               text={
@@ -315,11 +316,11 @@ export const App = () => {
             />
           </>
         ) : null}
-        {numberValue === 500_000 && (
+        {numberValue >= KPZN_START_LIMIT && !isDataForKpzn && (
           <BoxItem
-            payment={Number(calculatePayment(numberValue, 0.19, 120).toFixed(0)).toLocaleString('ru')}
+            payment={Number(calculatePayment(numberValue, 0.22, 120).toFixed(0)).toLocaleString('ru')}
             period={120}
-            rate={0.19}
+            rate={0.18}
             checked={boxValue => checkedBox === boxValue}
             setChecked={onSelectOption}
             text={'Понадобится недвижимость в залог'}
